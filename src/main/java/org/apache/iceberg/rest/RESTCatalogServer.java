@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.CatalogUtil;
 import org.apache.iceberg.catalog.Catalog;
+import org.apache.iceberg.rest.auth.AuthConfig;
 import org.apache.iceberg.util.PropertyUtil;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
@@ -77,7 +78,7 @@ public class RESTCatalogServer {
       warehouseLocation = tmp.toPath().resolve("iceberg_data").toFile().getAbsolutePath();
       catalogProperties.put(CatalogProperties.WAREHOUSE_LOCATION, warehouseLocation);
 
-      LOG.info("No warehouse location set.  Defaulting to temp location: {}", warehouseLocation);
+      LOG.info("No warehouse location set. Defaulting to temp location: {}", warehouseLocation);
     }
 
     LOG.info("Creating catalog with properties: {}", catalogProperties);
@@ -85,6 +86,11 @@ public class RESTCatalogServer {
   }
 
   public static void main(String[] args) throws Exception {
+    LOG.info("Starting REST Catalog Server");
+    
+    // 인증 관련 설정 로깅
+    logAuthConfig();
+    
     CatalogContext catalogContext = backendCatalog();
 
     try (RESTCatalogAdapter adapter = new RESTServerCatalogAdapter(catalogContext)) {
@@ -97,13 +103,34 @@ public class RESTCatalogServer {
       context.addServlet(servletHolder, "/*");
       context.setVirtualHosts(null);
       context.setGzipHandler(new GzipHandler());
+      
+      // Keycloak 인증 및 권한 관리 설정 추가
+      AuthConfig.configureAuth(context);
 
-      Server httpServer =
-          new Server(PropertyUtil.propertyAsInt(System.getenv(), "REST_PORT", 8181));
+      int port = PropertyUtil.propertyAsInt(System.getenv(), "REST_PORT", 8181);
+      LOG.info("Starting HTTP server on port {}", port);
+      
+      Server httpServer = new Server(port);
       httpServer.setHandler(context);
 
       httpServer.start();
+      LOG.info("REST Catalog Server started successfully");
+      
       httpServer.join();
+    }
+  }
+  
+  private static void logAuthConfig() {
+    LOG.info("Authentication configuration:");
+    LOG.info("  KEYCLOAK_ENABLED: {}", System.getenv("KEYCLOAK_ENABLED"));
+    
+    if ("true".equalsIgnoreCase(System.getenv("KEYCLOAK_ENABLED"))) {
+      // 민감한 정보는 로그에 남기지 않음
+      LOG.info("  KEYCLOAK_SERVER_URL: {}", System.getenv("KEYCLOAK_SERVER_URL"));
+      LOG.info("  KEYCLOAK_REALM: {}", System.getenv("KEYCLOAK_REALM"));
+      LOG.info("  KEYCLOAK_CLIENT_ID: {}", System.getenv("KEYCLOAK_CLIENT_ID"));
+      LOG.info("  KEYCLOAK_CLIENT_SECRET: [REDACTED]");
+      LOG.info("  BYPASS_NAMESPACE_AUTH: {}", System.getenv("BYPASS_NAMESPACE_AUTH"));
     }
   }
 }

@@ -35,6 +35,16 @@ ENV CATALOG_JDBC_USER=user
 ENV CATALOG_JDBC_PASSWORD=password
 ENV REST_PORT=8181
 
+
+# Keycloak 인증 관련 환경 변수 (기본값은 비활성화)
+ENV KEYCLOAK_ENABLED=false
+ENV KEYCLOAK_SERVER_URL=https://keycloak.example.com/auth
+ENV KEYCLOAK_REALM=iceberg-realm
+ENV KEYCLOAK_CLIENT_ID=iceberg-rest-server
+ENV KEYCLOAK_CLIENT_SECRET=change-me-in-production
+ENV BYPASS_NAMESPACE_AUTH=false
+
+
 EXPOSE $REST_PORT
 USER iceberg:iceberg
 ENV LANG en_US.UTF-8

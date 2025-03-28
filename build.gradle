@@ -51,6 +51,18 @@ dependencies {
 
   implementation 'org.xerial:sqlite-jdbc:3.46.1.0'
   implementation 'org.postgresql:postgresql:42.7.4'
+
+
+  // Keycloak 관련 의존성 추가
+  implementation 'org.keycloak:keycloak-servlet-filter-adapter:21.1.1'
+  implementation 'org.keycloak:keycloak-adapter-core:21.1.1'
+  implementation 'org.jboss.logging:jboss-logging:3.5.0.Final'
+  
+  // 서블릿 API
+  compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+  
+  // JSON 처리 관련 (Keycloak 응답 처리용)
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
 }
 
 jar {
